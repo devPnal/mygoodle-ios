@@ -1,1 +1,5 @@
 .DS_Store
+Preview Content/
+mygoodleTests/
+mygoodleUITests/
+mygoodle.xcodeproj
