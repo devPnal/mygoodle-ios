@@ -94,7 +94,8 @@ public class GlobalSub: ObservableObject {
         }
         
         self.subs = [
-            Sub(genreId: 4, title: String(localized: "왼쪽으로 밀어서 삭제"), cycleNumber: "0000", price: 0)
+            Sub(genreId: 4, title: String(localized: "왼쪽으로 밀어서 삭제"), cycleNumber: "0000", price: 0),
+            Sub(genreId: 4, title: String(localized: "오른쪽으로 밀어서 수정"), cycleNumber: "0000", price: 0)
         ]
     }
     
@@ -225,6 +226,19 @@ public class GlobalSub: ObservableObject {
             NotificationManager.shared.updateNotificationContent(amount: weeklyAmount)
         } else {
             NotificationManager.shared.stopNotifications()
+        }
+    }
+}
+
+extension GlobalSub {
+    func updateSubscription(id: UUID, genreId: Int, title: String, cycleNumber: String, price: Float) {
+        if let index = subs.firstIndex(where: { $0.id == id }) {
+            let updatedSub = Sub(id: id, genreId: genreId, title: title, cycleNumber: cycleNumber, price: price)
+            objectWillChange.send()
+            subs[index] = updatedSub
+            saveSubscriptions()
+            updateNotification()
+            updateWidget()
         }
     }
 }

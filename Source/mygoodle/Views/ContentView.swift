@@ -3,17 +3,25 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject var subs: GlobalSub
     @State private var stackId = UUID()
+    @State private var selectedSub: Sub? = nil
     
     var body: some View {
         NavigationStack {
             List {
                 SummarySection(subs: subs)
-                SubscriptionsList(subs: subs)
+                SubscriptionsList(
+                    subs: subs,
+                    selectedSub: $selectedSub
+                )
             }
             .navigationTitle("나의 정기 결제")
             .toolbarModifier()
         }
         .id(stackId)
+        .sheet(item: $selectedSub) { sub in
+            EditPageView(subscription: sub)
+                .presentationDragIndicator(.visible)
+        }
     }
 }
 
@@ -40,6 +48,7 @@ struct SummarySection: View {
 
 struct SubscriptionsList: View {
     @ObservedObject var subs: GlobalSub
+    @Binding var selectedSub: Sub?
     
     var body: some View {
         ForEach(subs.subs) { sub in
@@ -50,6 +59,14 @@ struct SubscriptionsList: View {
                     } label: {
                         Label("Delete", systemImage: "trash")
                     }
+                }
+                .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                    Button {
+                        selectedSub = sub
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                    .tint(.blue)
                 }
         }
     }
