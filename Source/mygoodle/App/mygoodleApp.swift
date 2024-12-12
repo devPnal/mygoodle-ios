@@ -1,4 +1,5 @@
 import SwiftUI
+import WidgetKit
 
 @main
 struct mygoodleApp: App {
@@ -12,6 +13,7 @@ struct mygoodleApp: App {
         if UserDefaults.standard.bool(forKey: "WeeklyNotificationEnabled") {
             NotificationManager.shared.updateNotificationContent(amount: notificationGlobalSub.calculateWeeklyPayments())
         }
+        WidgetCenter.shared.reloadAllTimelines()
     }
     
     var currentAppDarkMode: ColorScheme? {

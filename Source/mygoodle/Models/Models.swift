@@ -1,4 +1,5 @@
 import SwiftUI
+import WidgetKit
 
 public enum AppDarkMode: String, CaseIterable {
     case system
@@ -102,6 +103,14 @@ public class GlobalSub: ObservableObject {
     private func saveSubscriptions() {
         if let encoded = try? JSONEncoder().encode(subs) {
             UserDefaults.standard.set(encoded, forKey: subsKey)
+            
+            if let sharedDefaults = UserDefaults(suiteName: "group.com.pnalapps.mygoodle.payments") {
+                sharedDefaults.set(encoded, forKey: "subscriptions")
+                sharedDefaults.set(calculatePlannedMoney(), forKey: "totalAmount")
+                sharedDefaults.set(calculateLeftMoney(), forKey: "remainingAmount")
+            }
+            
+            WidgetCenter.shared.reloadTimelines(ofKind: "PaymentWidget")
         }
     }
     
@@ -177,10 +186,9 @@ public class GlobalSub: ObservableObject {
 
     func calculateWeeklyPayments() -> Float {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.firstWeekday = 2  // 1은 일요일, 2는 월요일
+        calendar.firstWeekday = 2
         let today = Date()
         
-        // 현재 날짜가 속한 주의 월요일과 일요일 구하기
         let monday = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: today))!
         let sunday = calendar.date(byAdding: .day, value: 6, to: monday)!
         
@@ -221,7 +229,6 @@ public class GlobalSub: ObservableObject {
     
     func updateNotification() {
         let weeklyAmount = calculateWeeklyPayments()
-        // 구독 목록이 변경될 때만 알림 업데이트
         if !subs.isEmpty {
             NotificationManager.shared.updateNotificationContent(amount: weeklyAmount)
         } else {
