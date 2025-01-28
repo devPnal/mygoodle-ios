@@ -22,6 +22,11 @@ struct ContentView: View {
             EditPageView(subscription: sub)
                 .presentationDragIndicator(.visible)
         }
+        .onAppear {
+            if UserDefaults.standard.bool(forKey: "WeeklyNotificationEnabled") {
+                subs.updateNotification()
+            }
+        }
     }
 }
 

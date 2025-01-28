@@ -228,9 +228,10 @@ public class GlobalSub: ObservableObject {
     }
     
     func updateNotification() {
-        let weeklyAmount = calculateWeeklyPayments()
+        //let weeklyAmount = calculateWeeklyPayments() //단일 알림 생성 방식
         if !subs.isEmpty {
-            NotificationManager.shared.updateNotificationContent(amount: weeklyAmount)
+            NotificationManager.shared.scheduleYearlyNotifications(globalSub: self) //52주 알림 생성 방식
+            //NotificationManager.shared.updateNotificationContent(amount: weeklyAmount) //단일 알림 생성 방식
         } else {
             NotificationManager.shared.stopNotifications()
         }
