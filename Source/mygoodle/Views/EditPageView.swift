@@ -1,25 +1,47 @@
 import SwiftUI
 
-struct AddPageView: View {
+struct EditPageView: View {
+    let subscription: Sub
     @State var genreId = 0
     @State var title = ""
     @State var cycleType = 0
     @State var cycleMM = 0
     @State var cycleDD = 1
     @State var price: Float?
+    
     @EnvironmentObject var subs: GlobalSub
     @FocusState private var isFocused: Bool
     @Environment(\.dismiss) private var dismiss
+    
+    init(subscription: Sub) {
+        self.subscription = subscription
+        
+        // 초기값 설정
+        _genreId = State(initialValue: subscription.genreId)
+        _title = State(initialValue: subscription.title)
+        _price = State(initialValue: subscription.price)
+        
+        let cycleNum = Int(subscription.cycleNumber) ?? 0
+        if cycleNum < 100 {
+            _cycleType = State(initialValue: 0)
+            _cycleMM = State(initialValue: 0)
+            _cycleDD = State(initialValue: cycleNum)
+        } else {
+            _cycleType = State(initialValue: 1)
+            _cycleMM = State(initialValue: Int(subscription.cycleNumber.prefix(2)) ?? 0)
+            _cycleDD = State(initialValue: Int(subscription.cycleNumber.suffix(2)) ?? 1)
+        }
+    }
     
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 20) {
                 SubscriptionForm
-                AddButton
+                UpdateButton
                 Spacer()
             }
             .padding()
-            .navigationTitle("새 정기 결제 추가")
+            .navigationTitle("정기 결제 수정")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { CloseButton }
             .toolbarBackground(.visible, for: .navigationBar)
@@ -108,19 +130,16 @@ struct AddPageView: View {
             }
             .disabled(cycleType == 0)
             .opacity(cycleType == 0 ? 0.3 : 1)
-            .onChange(of: cycleType) { cycleMM = 0; }
-            Text("월").onTapGesture {
-                isFocused = false
-            }
-            .disabled(cycleType == 0)
-            .opacity(cycleType == 0 ? 0.3 : 1)
+            .onChange(of: cycleType) { cycleMM = 0 }
+            
+            Text("월").onTapGesture { isFocused = false }
+                .disabled(cycleType == 0)
+                .opacity(cycleType == 0 ? 0.3 : 1)
             
             Picker("일", selection: $cycleDD) {
                 ForEach(1..<32) { Text("\($0)").tag($0) }
             }
-            Text("일").onTapGesture {
-                isFocused = false
-            }
+            Text("일").onTapGesture { isFocused = false }
         }
         .pickerStyle(.wheel)
     }
@@ -137,9 +156,9 @@ struct AddPageView: View {
         }
     }
     
-    private var AddButton: some View {
-        Button(action: addSubscription) {
-            Text("정기 결제 추가하기")
+    private var UpdateButton: some View {
+        Button(action: updateSubscription) {
+            Text("정기 결제 수정하기")
                 .frame(maxWidth: .infinity, minHeight: 50)
                 .background(Color(red: 29/255, green: 50/255, blue: 82/255))
                 .foregroundColor(.white)
@@ -157,14 +176,14 @@ struct AddPageView: View {
         }
     }
     
-    private func addSubscription() {
+    private func updateSubscription() {
         let cycleNumber = String(format: "%02d%02d", cycleMM, cycleDD)
-        guard let finalPrice = price else { return }
-        subs.addSubscription(
+        subs.updateSubscription(
+            id: subscription.id,
             genreId: genreId,
             title: title,
             cycleNumber: cycleNumber,
-            price: finalPrice
+            price: price!
         )
         dismiss()
     }

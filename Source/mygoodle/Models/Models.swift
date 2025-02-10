@@ -1,4 +1,5 @@
 import SwiftUI
+import WidgetKit
 
 public enum AppDarkMode: String, CaseIterable {
     case system
@@ -94,13 +95,22 @@ public class GlobalSub: ObservableObject {
         }
         
         self.subs = [
-            Sub(genreId: 4, title: String(localized: "왼쪽으로 밀어서 삭제"), cycleNumber: "0000", price: 0)
+            Sub(genreId: 4, title: String(localized: "왼쪽으로 밀어서 삭제"), cycleNumber: "0000", price: 0),
+            Sub(genreId: 4, title: String(localized: "오른쪽으로 밀어서 수정"), cycleNumber: "0000", price: 0)
         ]
     }
     
     private func saveSubscriptions() {
         if let encoded = try? JSONEncoder().encode(subs) {
             UserDefaults.standard.set(encoded, forKey: subsKey)
+            
+            if let sharedDefaults = UserDefaults(suiteName: "group.com.pnalapps.mygoodle.payments") {
+                sharedDefaults.set(encoded, forKey: "subscriptions")
+                sharedDefaults.set(calculatePlannedMoney(), forKey: "totalAmount")
+                sharedDefaults.set(calculateLeftMoney(), forKey: "remainingAmount")
+            }
+            
+            WidgetCenter.shared.reloadTimelines(ofKind: "PaymentWidget")
         }
     }
     
@@ -176,10 +186,9 @@ public class GlobalSub: ObservableObject {
 
     func calculateWeeklyPayments() -> Float {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.firstWeekday = 2  // 1은 일요일, 2는 월요일
+        calendar.firstWeekday = 2
         let today = Date()
         
-        // 현재 날짜가 속한 주의 월요일과 일요일 구하기
         let monday = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: today))!
         let sunday = calendar.date(byAdding: .day, value: 6, to: monday)!
         
@@ -219,12 +228,25 @@ public class GlobalSub: ObservableObject {
     }
     
     func updateNotification() {
-        let weeklyAmount = calculateWeeklyPayments()
-        // 구독 목록이 변경될 때만 알림 업데이트
+        //let weeklyAmount = calculateWeeklyPayments() //단일 알림 생성 방식
         if !subs.isEmpty {
-            NotificationManager.shared.updateNotificationContent(amount: weeklyAmount)
+            NotificationManager.shared.scheduleYearlyNotifications(globalSub: self) //52주 알림 생성 방식
+            //NotificationManager.shared.updateNotificationContent(amount: weeklyAmount) //단일 알림 생성 방식
         } else {
             NotificationManager.shared.stopNotifications()
+        }
+    }
+}
+
+extension GlobalSub {
+    func updateSubscription(id: UUID, genreId: Int, title: String, cycleNumber: String, price: Float) {
+        if let index = subs.firstIndex(where: { $0.id == id }) {
+            let updatedSub = Sub(id: id, genreId: genreId, title: title, cycleNumber: cycleNumber, price: price)
+            objectWillChange.send()
+            subs[index] = updatedSub
+            saveSubscriptions()
+            updateNotification()
+            updateWidget()
         }
     }
 }

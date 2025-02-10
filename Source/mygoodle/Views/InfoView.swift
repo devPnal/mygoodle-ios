@@ -6,6 +6,7 @@ struct InfoView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showingDisclaimerAlert = false
     @State private var showingNotificationAlert = false
+    @StateObject private var globalSub = GlobalSub()
     
     var body: some View {
         NavigationStack {
@@ -78,12 +79,10 @@ struct InfoView: View {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { success, error in
             DispatchQueue.main.async {
                 if success {
-                    // 권한이 승인되면 알림 설정
-                    NotificationManager.shared.updateNotificationContent(amount: GlobalSub().calculateWeeklyPayments())
+                    // NotificationManager.shared.updateNotificationContent(amount: GlobalSub().calculateWeeklyPayments()) //단일 알림 생성 방식
+                    NotificationManager.shared.scheduleYearlyNotifications(globalSub: globalSub) //52주 알림 생성 방식
                 } else {
-                    // 권한이 거부되면 토글 되돌리기
                     notificationEnabled = false
-                    // 설정 앱으로 이동하도록 안내하는 알럿 표시
                     showingNotificationAlert = true
                 }
             }
