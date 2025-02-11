@@ -6,10 +6,6 @@
 	<array>
 		<string>com.pnalapps.mygoodle.refresh</string>
 	</array>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string></string>
-	</array>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIImageName</key>
